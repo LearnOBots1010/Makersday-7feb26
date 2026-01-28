@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .habit {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .habit-info {
+            flex: 1;
+        }
+        .streak {
+            font-weight: bold;
+            color: #ff5722;
+        }
+        .rewards-section {
+            margin-top: 30px;
+        }
+        .reward {
+            background-color: #fff3cd;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border-left: 5px solid #ffc107;
+        }
+        .unlocked {
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <h1>Habit Tracker</h1>
+    <form id="add-habit-form">
+        <input type="text" id="habit-name" placeholder="Enter habit name" required>
+        <button type="submit">Add Habit</button>
+    </form>
+    <div id="habits-list"></div>
+    <div class="rewards-section">
+        <h2>Rewards</h2>
+        <div id="rewards"></div>
+    </div>
+
+    <script>
+        // Possible rewards with thresholds
+        const rewards = [
+            { threshold: 7, name: "Week Warrior" },
+            { threshold: 30, name: "Month Master" },
+            { threshold: 100, name: "Century Champion" },
+            { threshold: 365, name: "Year Legend" }
+        ];
+
+        // Load habits from localStorage
+        let habits = JSON.parse(localStorage.getItem('habits')) || [];
+
+        const habitsList = document.getElementById('habits-list');
+        const rewardsDiv = document.getElementById('rewards');
+        const addHabitForm = document.getElementById('add-habit-form');
+
+        // Function to save habits to localStorage
+        function saveHabits() {
+            localStorage.setItem('habits', JSON.stringify(habits));
+        }
+
+        // Function to render habits
+        function renderHabits() {
+            habitsList.innerHTML = '';
+            habits.forEach((habit, index) => {
+                const habitDiv = document.createElement('div');
+                habitDiv.className = 'habit';
+                habitDiv.innerHTML = `
+                    <div class="habit-info">
+                        <strong>${habit.name}</strong>
+                        <div class="streak">Streak: ${habit.streak} days</div>
+                    </div>
+                    <button onclick="markDone(${index})">Mark Done Today</button>
+                `;
+                habitsList.appendChild(habitDiv);
+            });
+        }
+
+        // Function to render rewards
+        function renderRewards() {
+            rewardsDiv.innerHTML = '';
+            rewards.forEach(reward => {
+                const rewardDiv = document.createElement('div');
+                rewardDiv.className = 'reward';
+                const isUnlocked = habits.some(habit => habit.streak >= reward.threshold);
+                if (isUnlocked) {
+                    rewardDiv.classList.add('unlocked');
+                }
+                rewardDiv.textContent = `${reward.name} (${reward.threshold} days) ${isUnlocked ? '- Unlocked!' : ''}`;
+                rewardsDiv.appendChild(rewardDiv);
+            });
+        }
+
+        // Function to add a new habit
+        addHabitForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const habitName = document.getElementById('habit-name').value.trim();
+            if (habitName) {
+                habits.push({ name: habitName, streak: 0, lastDate: null });
+                saveHabits();
+                renderHabits();
+                renderRewards();
+                document.getElementById('habit-name').value = '';
+            }
+        });
+
+        // Function to mark a habit as done
+        function markDone(index) {
+            const habit = habits[index];
+            const today = new Date().toDateString();
+            if (habit.lastDate === today) {
+                alert('Already marked done today!');
+                return;
+            }
+            const lastDate = habit.lastDate ? new Date(habit.lastDate) : null;
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (lastDate && lastDate.toDateString() === yesterday.toDateString()) {
+                habit.streak += 1;
+            } else {
+                habit.streak = 1;
+            }
+            habit.lastDate = today;
+            saveHabits();
+            renderHabits();
+            renderRewards();
+        }
+
+        // Initial render
+        renderHabits();
+        renderRewards();
+    </script>
+</body>
+</html>
+```
