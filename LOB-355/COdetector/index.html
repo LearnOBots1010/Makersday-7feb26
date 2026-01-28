@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CO Scanner using OLED Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      margin: 40px;
+      background-color: #f9f9f9;
+      color: #222;
+    }
+    h1, h2, h3 {
+      color: #003366;
+    }
+    code, pre {
+      background: #eee;
+      padding: 8px;
+      display: block;
+      overflow-x: auto;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin: 20px 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #ffffff;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>CO Scanner using OLED Display (Arduino)</h1>
+
+    <img src="https://learnobots1010.github.io/Makersday-7feb26/LOB-355/COdetector/COdetector.png" alt="CO Scanner Project Image">
+
+    <h2>Overview</h2>
+    <p>
+      This project is a simple carbon monoxide (CO) scanner built using an Arduino,
+      an analogue gas sensor, and a 128×64 OLED display. The system continuously reads
+      analogue values from the gas sensor and displays them in large, easy-to-read digits
+      on the OLED screen.
+    </p>
+
+    <p>
+      The project is intended for educational and demonstration purposes, focusing on
+      analogue sensor interfacing, OLED display communication via I²C, and basic embedded
+      system programming.
+    </p>
+
+    <p>
+      <strong>Wokwi simulation:</strong><br>
+      <a href="https://wokwi.com/projects/454371484096886785" target="_blank">
+        https://wokwi.com/projects/454371484096886785
+      </a>
+    </p>
+
+    <h2>Features</h2>
+    <ul>
+      <li>Real-time analogue gas sensor reading</li>
+      <li>Large centred numerical display</li>
+      <li>SSD1306 128×64 OLED support</li>
+      <li>Intro screen with presentation text</li>
+      <li>Simple and readable Arduino code</li>
+    </ul>
+
+    <h2>Components Used</h2>
+    <ul>
+      <li>Arduino Uno (or compatible board)</li>
+      <li>Analogue gas sensor (e.g. MQ-series)</li>
+      <li>128×64 OLED display (SSD1306, I²C)</li>
+      <li>Jumper wires</li>
+      <li>Breadboard (optional)</li>
+    </ul>
+
+    <h2>Libraries Required</h2>
+    <ul>
+      <li>Wire</li>
+      <li>Adafruit GFX Library</li>
+      <li>Adafruit SSD1306 Library</li>
+    </ul>
+
+    <h2>Wiring Connections</h2>
+
+    <h3>OLED Display (I²C)</h3>
+    <ul>
+      <li>VCC → 5V</li>
+      <li>GND → GND</li>
+      <li>SDA → A4</li>
+      <li>SCL → A5</li>
+    </ul>
+
+    <h3>Gas Sensor</h3>
+    <ul>
+      <li>AO → A0</li>
+      <li>VCC → 5V</li>
+      <li>GND → GND</li>
+    </ul>
+
+    <h2>How It Works</h2>
+    <ol>
+      <li>The OLED display initialises on startup.</li>
+      <li>An intro screen displays the presenters’ names.</li>
+      <li>The Arduino reads an analogue value from the gas sensor on pin A0.</li>
+      <li>The sensor value is shown in large font at the centre of the display.</li>
+      <li>The display refreshes every 500 milliseconds.</li>
+    </ol>
+
+    <h2>Notes</h2>
+    <ul>
+      <li>The displayed value is a raw analogue reading.</li>
+      <li>No calibration or ppm conversion is applied.</li>
+      <li>This project is for educational and simulation use only.</li>
+    </ul>
+
+    <h2>Future Improvements</h2>
+    <ul>
+      <li>Convert readings to ppm using calibration data</li>
+      <li>Add audible or visual alerts for high gas levels</li>
+      <li>Display graphs or bar indicators</li>
+      <li>Log data over time</li>
+    </ul>
+
+    <h2>Authors</h2>
+    <p>Hiba &amp; Eeshal</p>
+
+    <h2>Licence</h2>
+    <p>
+      This project is open-source and intended for educational use.
+      You may modify and distribute it freely with attribution.
+    </p>
+
+  </div>
+
+</body>
+</html>
