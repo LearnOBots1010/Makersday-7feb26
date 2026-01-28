@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Park Gomoku</title>
+<style>
+body { margin:0; overflow:hidden; font-family:Segoe UI, sans-serif; background:#87ceeb; }
+#ui {
+    position:absolute; top:20px; width:100%;
+    text-align:center; pointer-events:none;
+}
+#message { font-size:28px; font-weight:800; color:#222; }
+  #switch-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    pointer-events: auto;
+    z-index: 100;
+}
+#switch-btn:hover { background: rgba(0, 0, 0, 0.7); }
+#restart {
+    position:absolute; bottom:30px; left:50%;
+    transform:translateX(-50%);
+    padding:12px 28px;
+    background:#2ecc71; border:none;
+    border-radius:30px; color:white;
+    font-weight:bold; display:none;
+}
+</style>
+</head>
+
+<body>
+<div id="ui">
+    <div id="message">Black's Turn</div>
+</div>
+<button id="restart" onclick="location.reload()">NEW MATCH</button>
+<button id="switch-btn" onclick="window.location.href='index.html'">Switch to Studio Version</button>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------------- CONFIG ---------------- */
+const SIZE = 11;
+const EMPTY=0, BLACK=1, WHITE=2;
+
+/* ---------------- GAME STATE ---------------- */
+let board = Array.from({length:SIZE},()=>Array(SIZE).fill(EMPTY));
+let current = BLACK;
+let gameOver = false;
+
+/* ---------------- SCENE ---------------- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 300);
+camera.position.set(14,12,14);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
+
+const controls = new OrbitControls(camera,renderer.domElement);
+controls.enableDamping = true;
+controls.target.set(0,0,0);
+
+/* ---------------- LIGHT ---------------- */
+scene.add(new THREE.AmbientLight(0xffffff,0.7));
+const sun = new THREE.DirectionalLight(0xffffff,1.2);
+sun.position.set(20,40,20);
+sun.castShadow=true;
+scene.add(sun);
+
+/* ---------------- GROUND ---------------- */
+const grass = new THREE.Mesh(
+    new THREE.PlaneGeometry(200,200),
+    new THREE.MeshStandardMaterial({color:0x5fa75f, roughness:1})
+);
+grass.rotation.x=-Math.PI/2;
+grass.receiveShadow=true;
+scene.add(grass);
+
+/* ---------------- BOARD ---------------- */
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+
+const base = new THREE.Mesh(
+    new THREE.BoxGeometry(SIZE,0.6,SIZE),
+    new THREE.MeshStandardMaterial({color:0xe2c48f})
+);
+base.position.y=-0.3;
+base.receiveShadow=true;
+boardGroup.add(base);
+
+const grid = new THREE.GridHelper(SIZE-1,SIZE-1,0x444444,0x888888);
+grid.position.y=0.01;
+boardGroup.add(grid);
+
+/* ---------------- BENCHES (CLEAN) ---------------- */
+function bench(x,z,r){
+    const b = new THREE.Group();
+    const seat = new THREE.Mesh(
+        new THREE.BoxGeometry(2.6,0.25,0.9),
+        new THREE.MeshStandardMaterial({color:0x8b5a2b})
+    );
+    seat.position.y=0.5;
+    seat.castShadow=true;
+    b.add(seat);
+
+    b.position.set(x,0,z);
+    b.rotation.y=r;
+    scene.add(b);
+}
+bench(0,7,0);
+bench(0,-7,Math.PI);
+
+/* ---------------- SIMPLE TREES ---------------- */
+function tree(x,z){
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3,0.4,3),
+        new THREE.MeshStandardMaterial({color:0x7a4a2e})
+    );
+    trunk.position.set(x,1.5,z);
+    trunk.castShadow=true;
+
+    const leaves = new THREE.Mesh(
+        new THREE.SphereGeometry(1.8,16,16),
+        new THREE.MeshStandardMaterial({color:0x2e8b57})
+    );
+    leaves.position.set(x,4,z);
+    leaves.castShadow=true;
+
+    scene.add(trunk,leaves);
+}
+for(let i=0;i<16;i++){
+    tree((Math.random()-0.5)*120,(Math.random()-0.5)*120);
+}
+
+/* ---------------- GHOST STONE ---------------- */
+const ghost = new THREE.Mesh(
+    new THREE.SphereGeometry(0.35,32,32),
+    new THREE.MeshStandardMaterial({transparent:true,opacity:0.4})
+);
+ghost.scale.set(1,0.5,1);
+ghost.visible=false;
+scene.add(ghost);
+
+const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(SIZE,SIZE),
+    new THREE.MeshBasicMaterial({visible:false})
+);
+plane.rotation.x=-Math.PI/2;
+plane.position.y=0.01;
+scene.add(plane);
+
+/* ---------------- INPUT ---------------- */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+addEventListener("mousemove",e=>{
+    if(gameOver) return;
+    mouse.x=e.clientX/innerWidth*2-1;
+    mouse.y=-e.clientY/innerHeight*2+1;
+    raycaster.setFromCamera(mouse,camera);
+    const hit=raycaster.intersectObject(plane)[0];
+    if(!hit) return ghost.visible=false;
+
+    const r=Math.floor(hit.point.z+SIZE/2);
+    const c=Math.floor(hit.point.x+SIZE/2);
+    if(board[r]?.[c]===EMPTY){
+        ghost.visible=true;
+        ghost.position.set(c-(SIZE-1)/2,0.05,r-(SIZE-1)/2);
+        ghost.material.color.set(current===BLACK?0x000000:0xffffff);
+    } else ghost.visible=false;
+});
+
+addEventListener("mousedown",e=>{
+    if(e.button!==0||!ghost.visible||gameOver) return;
+    const r=Math.round(ghost.position.z+(SIZE-1)/2);
+    const c=Math.round(ghost.position.x+(SIZE-1)/2);
+    place(r,c);
+});
+
+/* ---------------- GAME LOGIC ---------------- */
+function place(r,c){
+    board[r][c]=current;
+    const stone=new THREE.Mesh(
+        new THREE.SphereGeometry(0.36,32,24),
+        new THREE.MeshStandardMaterial({color:current===BLACK?0x222222:0xfdfdfd})
+    );
+    stone.scale.set(1,0.5,1);
+    stone.position.set(c-(SIZE-1)/2,0.1,r-(SIZE-1)/2);
+    stone.castShadow=true;
+    boardGroup.add(stone);
+
+    if(win(r,c,current)){
+        gameOver=true;
+        message.textContent=(current===BLACK?"BLACK":"WHITE")+" WINS";
+        restart.style.display="block";
+        return;
+    }
+
+    current=current===BLACK?WHITE:BLACK;
+    message.textContent=current===BLACK?"Black's Turn":"White's Turn";
+}
+
+function win(r,c,p){
+    const d=[[1,0],[0,1],[1,1],[1,-1]];
+    for(const[x,y] of d){
+        let count=1;
+        for(let i=1;i<5;i++) if(board[r+x*i]?.[c+y*i]===p) count++; else break;
+        for(let i=1;i<5;i++) if(board[r-x*i]?.[c-y*i]===p) count++; else break;
+        if(count>=5) return true;
+    }
+    return false;
+}
+
+/* ---------------- LOOP ---------------- */
+function animate(){
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene,camera);
+}
+addEventListener("resize",()=>{
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+});
+animate();
+</script>
+</body>
+</html>
