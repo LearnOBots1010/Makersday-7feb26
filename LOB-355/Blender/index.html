@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Procedural Tree Growth Animation – Blender</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f6f8;
+      colour: #222;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 {
+      colour: #2c5e3f;
+    }
+    img, video {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin: 20px 0;
+    }
+    pre, code {
+      background: #eee;
+      padding: 10px;
+      display: block;
+      overflow-x: auto;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      colour: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>Procedural Tree Growth Animation (Blender)</h1>
+
+    <p>
+      This project is a procedural Blender animation created entirely using Python.
+      It visualises seeds growing into trees over time, combined with rain, lighting,
+      and a hidden Easter egg within the scene.
+    </p>
+    <h2>Full Animation</h2>
+    <video controls>
+      <source src="https://github.com/LearnOBots1010/Makersday-7feb26/raw/main/LOB-355/Blender/fulll%20animation.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <h2>Short Animation</h2>
+    <video controls>
+      <source src="https://github.com/LearnOBots1010/Makersday-7feb26/raw/main/LOB-355/Blender/small%20animation.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+
+    <h2>Project Overview</h2>
+
+    <p>
+      The animation begins with a flat ground plane. Seeds appear at staggered
+      intervals, grow into tall tree trunks, and finally form leafy canopies.
+      Rain falls continuously while the sun gradually brightens the environment.
+    </p>
+
+    <p>
+      All objects, materials, animations, and keyframes are generated automatically
+      using the Blender <code>bpy</code> API.
+    </p>
+
+    <h2>Key Features</h2>
+    <ul>
+      <li>Procedural creation of multiple trees</li>
+      <li>Animated tree growth using keyframes</li>
+      <li>Staggered timings for natural effect</li>
+      <li>Rain simulation with random motion</li>
+      <li>Sunlight animation</li>
+      <li>Hidden Easter egg embedded in scene</li>
+    </ul>
+
+    <h2>Scene Elements</h2>
+
+    <h3>Ground</h3>
+    <p>
+      A large green plane forms the base of the scene.
+    </p>
+
+    <h3>Trees</h3>
+    <p>
+      Each tree consists of a seed, a trunk and a leaf canopy grown in sequence.
+    </p>
+
+    <h3>Rain</h3>
+    <p>
+      Rain drops fall from random heights and disappear upon reaching ground level.
+    </p>
+
+    <h3>Lighting and Camera</h3>
+    <p>
+      A sun light source gradually increases in intensity while the camera
+      is positioned for a wide view of the scene.
+    </p>
+
+    <h3>Easter Egg</h3>
+    <p>
+      A bright red “67” is hidden in the scene using primitive shapes.
+    </p>
+
+    <h2>How to Run</h2>
+    <ol>
+      <li>Open Blender</li>
+      <li>Switch to the Scripting workspace</li>
+      <li>Paste the Python script into the text editor</li>
+      <li>Press Run Script</li>
+      <li>Play the timeline to view the animation</li>
+    </ol>
+
+    <footer>
+      <p>
+        Created for educational and creative experimentation using Blender and Python.
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
