@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dual Sensor Leak Detector – Arduino</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: #f4f6f8;
+      color: #222;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3 {
+      color: #1f4e79;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      border: 1px solid #ccc;
+      margin: 20px 0;
+    }
+    pre, code {
+      background: #eee;
+      padding: 10px;
+      display: block;
+      overflow-x: auto;
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <h1>Dual Sensor Leak Detector (Arduino)</h1>
+
+    <p>
+      This project demonstrates a simple leak detection system using two analogue
+      sensors connected to an Arduino. If either sensor detects a value above a
+      defined threshold, an LED indicator is activated.
+    </p>
+
+    <img src="https://github.com/LearnOBots1010/Makersday-7feb26/raw/main/LOB-355/LeakDetector/LeakDetector.png"
+         alt="Dual Sensor Leak Detector">
+
+    <h2>Project Overview</h2>
+
+    <p>
+      The system continuously monitors two analogue input pins. When a potential
+      leak is detected by either sensor, the LED turns on and remains illuminated
+      for a fixed duration, even if the sensor value drops immediately.
+    </p>
+
+    <p>
+      Sensor readings are also sent to the Serial Monitor for debugging and
+      observation.
+    </p>
+
+    <p>
+      <strong>Wokwi simulation:</strong><br>
+      <a href="https://wokwi.com/projects/454374458698692609" target="_blank">
+        https://wokwi.com/projects/454374458698692609
+      </a>
+    </p>
+
+    <h2>Key Features</h2>
+
+    <ul>
+      <li>Two analogue leak sensors</li>
+      <li>Adjustable sensitivity threshold</li>
+      <li>LED alert with timed hold</li>
+      <li>Serial output for monitoring</li>
+      <li>Simple and reliable logic</li>
+    </ul>
+
+    <h2>How It Works</h2>
+
+    <ol>
+      <li>Both sensors are read continuously using analogue inputs.</li>
+      <li>If either sensor exceeds the threshold, the LED turns on.</li>
+      <li>The LED remains on for three seconds.</li>
+      <li>After the timer expires, the LED turns off automatically.</li>
+    </ol>
+
+    <h2>Applications</h2>
+
+    <ul>
+      <li>Water leak detection</li>
+      <li>Moisture monitoring</li>
+      <li>Safety and alert systems</li>
+      <li>Educational Arduino projects</li>
+    </ul>
+
+    <footer>
+      <p>
+        Created for educational and demonstration purposes using Arduino.
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
