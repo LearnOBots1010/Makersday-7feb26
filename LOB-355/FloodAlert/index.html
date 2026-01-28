@@ -1,329 +1,273 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flood Alert System - Weather Monitor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0e27;
-            --bg-secondary: #161d3f;
-            --accent-cyan: #00d9ff;
-            --accent-yellow: #ffeb3b;
-            --accent-orange: #ff9800;
-            --accent-red: #f44336;
-            --text-primary: #e8eaf6;
-            --text-muted: #9fa8da;
-            --safe-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'IBM Plex Mono', monospace;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 80%, rgba(255, 152, 0, 0.05) 0%, transparent 50%);
-            z-index: 0;
-            animation: bgPulse 8s ease-in-out infinite;
-        }
-
-        @keyframes bgPulse { 0%,100%{opacity:0.3;}50%{opacity:0.6;} }
-
-        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 2rem; }
-
-        header { text-align: center; margin-bottom: 3rem; animation: slideDown 0.8s cubic-bezier(0.16,1,0.3,1); }
-        @keyframes slideDown { from{opacity:0;transform:translateY(-30px);}to{opacity:1;transform:translateY(0);} }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(2rem,5vw,4rem);
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-yellow));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-            text-transform: uppercase;
-        }
-
-        .subtitle { font-size:1rem; color: var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; }
-
-        .config-panel {
-            background: var(--bg-secondary);
-            border: 2px solid rgba(0, 217, 255, 0.2);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            animation: fadeIn 1s ease 0.2s both;
-        }
-
-        @keyframes fadeIn { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
-
-        .input-group { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap:1rem; margin-bottom:1rem; }
-
-        label { display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); margin-bottom:0.5rem; font-weight:600; }
-        input { width:100%; background: rgba(0,217,255,0.05); border:1px solid rgba(0,217,255,0.3); border-radius:8px; padding:0.875rem 1rem; color:var(--text-primary); font-family:'IBM Plex Mono', monospace; font-size:0.9rem; transition: all 0.3s ease; }
-        input:focus { outline:none; border-color:var(--accent-cyan); box-shadow:0 0 0 3px rgba(0,217,255,0.1); background: rgba(0,217,255,0.08); }
-
-        button {
-            background: linear-gradient(135deg, var(--accent-cyan), #0099cc);
-            border:none; border-radius:8px; padding:1rem 2rem; color: var(--bg-primary);
-            font-family: 'Orbitron', sans-serif; font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.1em;
-            cursor:pointer; transition: all 0.3s ease; box-shadow:0 4px 15px rgba(0,217,255,0.3);
-        }
-        button:hover { transform: translateY(-2px); box-shadow:0 6px 20px rgba(0,217,255,0.5); }
-        button:active { transform: translateY(0); }
-
-        .main-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap:2rem; animation:fadeIn 1s ease 0.4s both; }
-
-        .card { background: var(--bg-secondary); border: 2px solid rgba(0,217,255,0.2); border-radius:16px; padding:2rem; position:relative; overflow:hidden; transition: all 0.3s ease; }
-        .card::before { content: ''; position:absolute; top:-50%; right:-50%; width:200%; height:200%; background: radial-gradient(circle, rgba(0,217,255,0.1) 0%, transparent 70%); opacity:0; transition: opacity 0.3s ease; }
-        .card:hover::before { opacity:1; }
-        .card:hover { border-color: var(--accent-cyan); transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,217,255,0.2); }
-        .card-title { font-family: 'Orbitron', sans-serif; font-size:1.2rem; font-weight:700; color: var(--accent-cyan); margin-bottom:1.5rem; text-transform:uppercase; letter-spacing:0.05em; }
-
-        .alert-box { grid-column:1/-1; padding:2.5rem; text-align:center; border-width:3px; position:relative; }
-        .alert-box.safe { background: linear-gradient(135deg, rgba(76,175,80,0.1), rgba(76,175,80,0.05)); border-color: var(--safe-color); }
-        .alert-box.warning { background: linear-gradient(135deg, rgba(255,152,0,0.1), rgba(255,152,0,0.05)); border-color: var(--warning-color); animation: pulse 2s ease-in-out infinite; }
-        .alert-box.danger { background: linear-gradient(135deg, rgba(244,67,54,0.1), rgba(244,67,54,0.05)); border-color: var(--danger-color); animation: pulse 1.5s ease-in-out infinite; }
-
-        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,0.4);}50%{box-shadow:0 0 0 20px rgba(255,152,0,0);} }
-        .alert-icon { font-size:4rem; margin-bottom:1rem; display:inline-block; animation:bounce 2s ease-in-out infinite; }
-        @keyframes bounce { 0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);} }
-        .alert-title { font-family:'Orbitron', sans-serif; font-size:2rem; font-weight:900; margin-bottom:0.5rem; text-transform:uppercase; }
-        .alert-message { font-size:1.1rem; color:var(--text-muted); }
-
-        .weather-stat { margin-bottom:1.5rem; }
-        .stat-label { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem; }
-        .stat-value { font-size:2rem; font-weight:600; color:var(--accent-cyan); font-family:'Orbitron', sans-serif; }
-        .stat-unit { font-size:1rem; color:var(--text-muted); margin-left:0.25rem; }
-
-        .forecast-item { display:flex; justify-content:space-between; align-items:center; padding:1rem; background: rgba(0,217,255,0.03); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,217,255,0.1); transition:all 0.3s ease; }
-        .forecast-item:hover { background: rgba(0,217,255,0.08); border-color: rgba(0,217,255,0.3); }
-        .forecast-time { font-weight:600; color:var(--text-primary); }
-        .forecast-rain { color:var(--accent-cyan); font-family:'Orbitron', sans-serif; }
-
-        .loading { text-align:center; padding:3rem; font-size:1.2rem; color:var(--text-muted); }
-        .loading::after { content:'...'; animation:dots 1.5s steps(4,end) infinite; }
-        @keyframes dots {0%,20%{content:'.';}40%{content:'..';}60%,100%{content:'...';}}
-
-        .error { background: rgba(244,67,54,0.1); border:2px solid var(--danger-color); border-radius:8px; padding:1rem; color: var(--danger-color); margin-top:1rem; }
-
-        .data-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; }
-        .data-item { background: rgba(0,217,255,0.05); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:1rem; text-align:center; transition:all 0.3s ease; }
-        .data-item:hover { background: rgba(0,217,255,0.1); border-color: var(--accent-cyan); }
-        .data-item-value { font-size:1.5rem; font-weight:700; color:var(--accent-cyan); font-family:'Orbitron',sans-serif; margin-bottom:0.25rem; }
-        .data-item-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
-
-        footer { text-align:center; margin-top:4rem; padding:2rem; color:var(--text-muted); font-size:0.85rem; }
-
-        @media(max-width:768px){.container{padding:1rem;} h1{font-size:2rem;} .config-panel{padding:1.5rem;} .input-group{grid-template-columns:1fr;}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flood Alert System - Weather Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-primary: #0a0e27;
+    --bg-secondary: #161d3f;
+    --accent-cyan: #00d9ff;
+    --accent-yellow: #ffeb3b;
+    --accent-orange: #ff9800;
+    --accent-red: #f44336;
+    --text-primary: #e8eaf6;
+    --text-muted: #9fa8da;
+    --safe-color: #4caf50;
+    --warning-color: #ff9800;
+    --danger-color: #f44336;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family:'IBM Plex Mono', monospace;
+    background:var(--bg-primary);
+    color:var(--text-primary);
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+}
+body::before {
+    content:'';
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background: radial-gradient(circle at 20% 50%, rgba(0,217,255,0.05) 0%, transparent 50%),
+               radial-gradient(circle at 80% 80%, rgba(255,152,0,0.05) 0%, transparent 50%);
+    z-index:0;
+    animation:bgPulse 8s ease-in-out infinite;
+}
+@keyframes bgPulse {0%,100%{opacity:0.3;}50%{opacity:0.6;}}
+.container {position:relative; z-index:1; max-width:1400px; margin:0 auto; padding:2rem;}
+header {text-align:center; margin-bottom:3rem; animation:slideDown 0.8s cubic-bezier(0.16,1,0.3,1);}
+@keyframes slideDown {from{opacity:0; transform:translateY(-30px);} to{opacity:1; transform:translateY(0);}}
+h1 {font-family:'Orbitron',sans-serif; font-size:clamp(2rem,5vw,4rem); font-weight:900;
+background: linear-gradient(135deg,var(--accent-cyan),var(--accent-yellow)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:0.5rem; letter-spacing:-0.02em; text-transform:uppercase;}
+.subtitle {font-size:1rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase;}
+.config-panel {background:var(--bg-secondary); border:2px solid rgba(0,217,255,0.2); border-radius:16px; padding:2rem; margin-bottom:2rem; animation:fadeIn 1s ease 0.2s both;}
+@keyframes fadeIn {from{opacity:0; transform:translateY(20px);}to{opacity:1; transform:translateY(0);}}
+.input-group {display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:1rem; margin-bottom:1rem;}
+label {display:block; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-cyan); margin-bottom:0.5rem; font-weight:600;}
+input {width:100%; background:rgba(0,217,255,0.05); border:1px solid rgba(0,217,255,0.3); border-radius:8px; padding:0.875rem 1rem; color:var(--text-primary); font-family:'IBM Plex Mono',monospace; font-size:0.9rem; transition:all 0.3s ease;}
+input:focus {outline:none; border-color:var(--accent-cyan); box-shadow:0 0 0 3px rgba(0,217,255,0.1); background:rgba(0,217,255,0.08);}
+button {background:linear-gradient(135deg,var(--accent-cyan),#0099cc); border:none; border-radius:8px; padding:1rem 2rem; color:var(--bg-primary); font-family:'Orbitron',sans-serif; font-weight:700; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.1em; cursor:pointer; transition:all 0.3s ease; box-shadow:0 4px 15px rgba(0,217,255,0.3);}
+button:hover {transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,217,255,0.5);}
+button:active {transform:translateY(0);}
+.main-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:2rem; animation:fadeIn 1s ease 0.4s both;}
+.card {background:var(--bg-secondary); border:2px solid rgba(0,217,255,0.2); border-radius:16px; padding:2rem; position:relative; overflow:hidden; transition:all 0.3s ease;}
+.card::before {content:''; position:absolute; top:-50%; right:-50%; width:200%; height:200%; background:radial-gradient(circle, rgba(0,217,255,0.1) 0%, transparent 70%); opacity:0; transition:opacity 0.3s ease;}
+.card:hover::before {opacity:1;}
+.card:hover {border-color:var(--accent-cyan); transform:translateY(-4px); box-shadow:0 8px 30px rgba(0,217,255,0.2);}
+.card-title {font-family:'Orbitron',sans-serif; font-size:1.2rem; font-weight:700; color:var(--accent-cyan); margin-bottom:1.5rem; text-transform:uppercase; letter-spacing:0.05em;}
+.alert-box {grid-column:1/-1; padding:2.5rem; text-align:center; border-width:3px; position:relative;}
+.alert-box.safe {background:linear-gradient(135deg, rgba(76,175,80,0.1), rgba(76,175,80,0.05)); border-color:var(--safe-color);}
+.alert-box.warning {background:linear-gradient(135deg, rgba(255,152,0,0.1), rgba(255,152,0,0.05)); border-color:var(--warning-color); animation:pulse 2s ease-in-out infinite;}
+.alert-box.danger {background:linear-gradient(135deg, rgba(244,67,54,0.1), rgba(244,67,54,0.05)); border-color:var(--danger-color); animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse {0%,100%{box-shadow:0 0 0 0 rgba(255,152,0,0.4);}50%{box-shadow:0 0 0 20px rgba(255,152,0,0);}}
+.alert-icon {font-size:4rem; margin-bottom:1rem; display:inline-block; animation:bounce 2s ease-in-out infinite;}
+@keyframes bounce {0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+.alert-title {font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900; margin-bottom:0.5rem; text-transform:uppercase;}
+.alert-message {font-size:1.1rem; color:var(--text-muted);}
+.weather-stat {margin-bottom:1.5rem;}
+.stat-label {font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem;}
+.stat-value {font-size:2rem; font-weight:600; color:var(--accent-cyan); font-family:'Orbitron',sans-serif;}
+.stat-unit {font-size:1rem; color:var(--text-muted); margin-left:0.25rem;}
+.forecast-item {display:flex; justify-content:space-between; align-items:center; padding:1rem; background:rgba(0,217,255,0.03); border-radius:8px; margin-bottom:0.5rem; border:1px solid rgba(0,217,255,0.1); transition:all 0.3s ease;}
+.forecast-item:hover {background:rgba(0,217,255,0.08); border-color:rgba(0,217,255,0.3);}
+.forecast-time {font-weight:600; color:var(--text-primary);}
+.forecast-rain {color:var(--accent-cyan); font-family:'Orbitron',sans-serif;}
+.loading {text-align:center; padding:3rem; font-size:1.2rem; color:var(--text-muted);}
+.loading::after {content:'...'; animation:dots 1.5s steps(4,end) infinite;}
+@keyframes dots {0%,20%{content:'.';}40%{content:'..';}60%,100%{content:'...';}}
+.error {background:rgba(244,67,54,0.1); border:2px solid var(--danger-color); border-radius:8px; padding:1rem; color:var(--danger-color); margin-top:1rem;}
+.data-grid {display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem;}
+.data-item {background:rgba(0,217,255,0.05); border:1px solid rgba(0,217,255,0.2); border-radius:8px; padding:1rem; text-align:center; transition:all 0.3s ease;}
+.data-item:hover {background:rgba(0,217,255,0.1); border-color:var(--accent-cyan);}
+.data-item-value {font-size:1.5rem; font-weight:700; color:var(--accent-cyan); font-family:'Orbitron',sans-serif; margin-bottom:0.25rem;}
+.data-item-label {font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted);}
+footer {text-align:center; margin-top:4rem; padding:2rem; color:var(--text-muted); font-size:0.85rem;}
+@media(max-width:768px){.container{padding:1rem;} h1{font-size:2rem;} .config-panel{padding:1.5rem;} .input-group{grid-template-columns:1fr;}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>⚠ Flood Alert System</h1>
-            <p class="subtitle">Real-Time Weather Monitoring</p>
-        </header>
+<div class="container">
+<header>
+    <h1>⚠ Flood Alert System</h1>
+    <p class="subtitle">Real-Time Weather Monitoring</p>
+</header>
 
-        <div class="config-panel">
-            <div class="input-group">
-                <div>
-                    <label for="city">City Name</label>
-                    <input type="text" id="city" placeholder="e.g., Islamabad,PK" value="Islamabad,PK">
-                </div>
-                <div>
-                    <label for="lat">Latitude (Optional)</label>
-                    <input type="text" id="lat" placeholder="e.g., 33.6844">
-                </div>
-                <div>
-                    <label for="lon">Longitude (Optional)</label>
-                    <input type="text" id="lon" placeholder="e.g., 73.0479">
-                </div>
-            </div>
-            <button onclick="fetchWeatherData()">🔄 Fetch Weather Data</button>
-            <div id="error"></div>
+<div class="config-panel">
+    <div class="input-group">
+        <div>
+            <label for="apiKey">OpenWeather API Key</label>
+            <input type="text" id="apiKey" placeholder="Enter your API key">
         </div>
-
-        <div id="weatherData" style="display:none;">
-            <div id="alertBox" class="card alert-box"></div>
-            <div class="main-grid">
-                <!-- Current Weather -->
-                <div class="card">
-                    <h3 class="card-title">Current Weather</h3>
-                    <div class="weather-stat">
-                        <div class="stat-label">Temperature</div>
-                        <div class="stat-value"><span id="temp">--</span><span class="stat-unit">°C</span></div>
-                    </div>
-                    <div class="weather-stat">
-                        <div class="stat-label">Feels Like</div>
-                        <div class="stat-value"><span id="feelsLike">--</span><span class="stat-unit">°C</span></div>
-                    </div>
-                    <div class="weather-stat">
-                        <div class="stat-label">Condition</div>
-                        <div class="stat-value" id="condition" style="font-size:1.2rem;">--</div>
-                    </div>
-                </div>
-
-                <!-- Precipitation -->
-                <div class="card">
-                    <h3 class="card-title">Precipitation Data</h3>
-                    <div class="weather-stat">
-                        <div class="stat-label">Rain (Last Hour)</div>
-                        <div class="stat-value"><span id="rain1h">0</span><span class="stat-unit">mm</span></div>
-                    </div>
-                    <div class="weather-stat">
-                        <div class="stat-label">Rain (Last 3 Hours)</div>
-                        <div class="stat-value"><span id="rain3h">0</span><span class="stat-unit">mm</span></div>
-                    </div>
-                    <div class="weather-stat">
-                        <div class="stat-label">Humidity</div>
-                        <div class="stat-value"><span id="humidity">--</span><span class="stat-unit">%</span></div>
-                    </div>
-                </div>
-
-                <!-- Atmospheric -->
-                <div class="card">
-                    <h3 class="card-title">Atmospheric Conditions</h3>
-                    <div class="data-grid">
-                        <div class="data-item">
-                            <div class="data-item-value" id="pressure">--</div>
-                            <div class="data-item-label">Pressure (hPa)</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-item-value" id="visibility">--</div>
-                            <div class="data-item-label">Visibility (km)</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-item-value" id="windSpeed">--</div>
-                            <div class="data-item-label">Wind (km/h)</div>
-                        </div>
-                        <div class="data-item">
-                            <div class="data-item-value" id="clouds">--</div>
-                            <div class="data-item-label">Clouds (%)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Location -->
-                <div class="card">
-                    <h3 class="card-title">Location Info</h3>
-                    <div class="weather-stat">
-                        <div class="stat-label">City</div>
-                        <div class="stat-value" id="cityName" style="font-size:1.5rem;">--</div>
-                    </div>
-                    <div class="weather-stat">
-                        <div class="stat-label">Coordinates</div>
-                        <div class="stat-value" id="coords" style="font-size:1rem;">--</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Forecast -->
-            <div class="card" style="margin-top:2rem;">
-                <h3 class="card-title">5-Day Forecast</h3>
-                <div id="forecast"></div>
-            </div>
-
-            <!-- Alerts -->
-            <div class="card" style="margin-top:2rem;">
-                <h3 class="card-title">Weather Alerts</h3>
-                <div id="alerts"></div>
-            </div>
+        <div>
+            <label for="city">City Name</label>
+            <input type="text" id="city" placeholder="e.g., Islamabad,PK" value="Islamabad,PK">
         </div>
-
-        <footer>
-            <p>Powered by OpenWeather API | Data updates in real-time</p>
-            <p style="margin-top:0.5rem; font-size:0.75rem;">Last updated: <span id="lastUpdate">--</span></p>
-        </footer>
+        <div>
+            <label for="lat">Latitude (Optional)</label>
+            <input type="text" id="lat" placeholder="e.g., 33.6844">
+        </div>
+        <div>
+            <label for="lon">Longitude (Optional)</label>
+            <input type="text" id="lon" placeholder="e.g., 73.0479">
+        </div>
     </div>
+    <button onclick="fetchWeatherData()">🔄 Fetch Weather Data</button>
+    <div id="error"></div>
+</div>
 
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedCity = localStorage.getItem('weatherCity');
-            const savedLat = localStorage.getItem('weatherLat');
-            const savedLon = localStorage.getItem('weatherLon');
-            if (savedCity) document.getElementById('city').value = savedCity;
-            if (savedLat) document.getElementById('lat').value = savedLat;
-            if (savedLon) document.getElementById('lon').value = savedLon;
+<div id="weatherData" style="display:none;">
+    <div id="alertBox" class="card alert-box"></div>
+    <div class="main-grid">
+        <div class="card">
+            <h3 class="card-title">Current Weather</h3>
+            <div class="weather-stat"><div class="stat-label">Temperature</div><div class="stat-value"><span id="temp">--</span><span class="stat-unit">°C</span></div></div>
+            <div class="weather-stat"><div class="stat-label">Feels Like</div><div class="stat-value"><span id="feelsLike">--</span><span class="stat-unit">°C</span></div></div>
+            <div class="weather-stat"><div class="stat-label">Condition</div><div class="stat-value" id="condition">--</div></div>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Precipitation Data</h3>
+            <div class="weather-stat"><div class="stat-label">Rain (Last Hour)</div><div class="stat-value"><span id="rain1h">0</span><span class="stat-unit">mm</span></div></div>
+            <div class="weather-stat"><div class="stat-label">Rain (Last 3 Hours)</div><div class="stat-value"><span id="rain3h">0</span><span class="stat-unit">mm</span></div></div>
+            <div class="weather-stat"><div class="stat-label">Humidity</div><div class="stat-value"><span id="humidity">--</span><span class="stat-unit">%</span></div></div>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Atmospheric Conditions</h3>
+            <div class="data-grid">
+                <div class="data-item"><div class="data-item-value" id="pressure">--</div><div class="data-item-label">Pressure (hPa)</div></div>
+                <div class="data-item"><div class="data-item-value" id="visibility">--</div><div class="data-item-label">Visibility (km)</div></div>
+                <div class="data-item"><div class="data-item-value" id="windSpeed">--</div><div class="data-item-label">Wind (km/h)</div></div>
+                <div class="data-item"><div class="data-item-value" id="clouds">--</div><div class="data-item-label">Clouds (%)</div></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 class="card-title">Location Info</h3>
+            <div class="weather-stat"><div class="stat-label">City</div><div class="stat-value" id="cityName">--</div></div>
+            <div class="weather-stat"><div class="stat-label">Coordinates</div><div class="stat-value" id="coords">--</div></div>
+        </div>
+    </div>
+    <div class="card" style="margin-top:2rem;">
+        <h3 class="card-title">5-Day Forecast</h3>
+        <div id="forecast"></div>
+    </div>
+    <div class="card" style="margin-top:2rem;">
+        <h3 class="card-title">Weather Alerts</h3>
+        <div id="alerts"></div>
+    </div>
+</div>
 
-            // Auto-fetch
-            fetchWeatherData();
-        });
+<footer>
+    <p>Powered by OpenWeather API | Data updates in real-time</p>
+    <p style="margin-top:0.5rem; font-size:0.75rem;">Last updated: <span id="lastUpdate">--</span></p>
+</footer>
+</div>
 
-        async function fetchWeatherData() {
-            const city = document.getElementById('city').value.trim();
-            const lat = document.getElementById('lat').value.trim();
-            const lon = document.getElementById('lon').value.trim();
-            const errorDiv = document.getElementById('error');
-            errorDiv.innerHTML = '';
+<script>
+// Load saved API key
+window.addEventListener('DOMContentLoaded', () => {
+    const savedApiKey = localStorage.getItem('weatherApiKey');
+    const savedCity = localStorage.getItem('weatherCity') || 'Islamabad,PK';
+    const savedLat = localStorage.getItem('weatherLat');
+    const savedLon = localStorage.getItem('weatherLon');
 
-            if (!city && (!lat || !lon)) {
-                errorDiv.innerHTML = '<div class="error">Please enter a city or coordinates.</div>';
-                return;
-            }
+    if (savedApiKey) document.getElementById('apiKey').value = savedApiKey;
+    document.getElementById('city').value = savedCity;
+    if (savedLat) document.getElementById('lat').value = savedLat;
+    if (savedLon) document.getElementById('lon').value = savedLon;
 
-            localStorage.setItem('weatherCity', city);
-            localStorage.setItem('weatherLat', lat);
-            localStorage.setItem('weatherLon', lon);
+    if (savedApiKey) fetchWeatherData();
+});
 
-            try {
-                const query = new URLSearchParams({ city, lat, lon });
-                const response = await fetch(`/api/weather?${query.toString()}`);
-                if (!response.ok) throw new Error('Failed to fetch weather data');
-                const data = await response.json();
-                document.getElementById('weatherData').style.display = 'block';
+async function fetchWeatherData() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const lat = document.getElementById('lat').value.trim();
+    const lon = document.getElementById('lon').value.trim();
+    const errorDiv = document.getElementById('error');
+    errorDiv.innerHTML = '';
 
-                // Update weather stats
-                document.getElementById('temp').innerText = data.main.temp.toFixed(1);
-                document.getElementById('feelsLike').innerText = data.main.feels_like.toFixed(1);
-                document.getElementById('humidity').innerText = data.main.humidity;
-                document.getElementById('pressure').innerText = data.main.pressure;
-                document.getElementById('visibility').innerText = (data.visibility / 1000).toFixed(1);
-                document.getElementById('windSpeed').innerText = (data.wind.speed * 3.6).toFixed(1);
-                document.getElementById('clouds').innerText = data.clouds.all;
-                document.getElementById('cityName').innerText = data.name;
-                document.getElementById('coords').innerText = `${data.coord.lat.toFixed(4)}, ${data.coord.lon.toFixed(4)}`;
-                document.getElementById('condition').innerText = data.weather[0].description;
+    if (!apiKey) {
+        errorDiv.innerHTML = '<div class="error">⚠ Please enter your OpenWeather API key</div>';
+        return;
+    }
 
-                document.getElementById('rain1h').innerText = data.rain?.['1h'] ?? 0;
-                document.getElementById('rain3h').innerText = data.rain?.['3h'] ?? 0;
+    localStorage.setItem('weatherApiKey', apiKey);
+    localStorage.setItem('weatherCity', city);
+    localStorage.setItem('weatherLat', lat);
+    localStorage.setItem('weatherLon', lon);
 
-                // Alert box
-                const alertBox = document.getElementById('alertBox');
-                const rain = data.rain?.['1h'] ?? 0;
-                if (rain < 10) {
-                    alertBox.className = 'card alert-box safe';
-                    alertBox.innerHTML = '<div class="alert-icon">✅</div><div class="alert-title">Safe</div><div class="alert-message">No heavy rainfall detected.</div>';
-                } else if (rain < 30) {
-                    alertBox.className = 'card alert-box warning';
-                    alertBox.innerHTML = '<div class="alert-icon">⚠️</div><div class="alert-title">Warning</div><div class="alert-message">Moderate rainfall detected. Stay alert!</div>';
-                } else {
-                    alertBox.className = 'card alert-box danger';
-                    alertBox.innerHTML = '<div class="alert-icon">🚨</div><div class="alert-title">Danger</div><div class="alert-message">Heavy rainfall detected! Take precautions!</div>';
-                }
-
-                document.getElementById('lastUpdate').innerText = new Date().toLocaleString();
-            } catch (err) {
-                errorDiv.innerHTML = `<div class="error">${err.message}</div>`;
-            }
+    try {
+        let currentUrl = '';
+        let forecastUrl = '';
+        if (lat && lon) {
+            currentUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+            forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+        } else if (city) {
+            currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+            forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+        } else {
+            errorDiv.innerHTML = '<div class="error">⚠ Please enter either city name or coordinates</div>';
+            return;
         }
-    </script>
+
+        const currentResp = await fetch(currentUrl);
+        if (!currentResp.ok) throw new Error(`${currentResp.status} - ${currentResp.statusText}`);
+        const currentData = await currentResp.json();
+        displayCurrentWeather(currentData);
+
+        const forecastResp = await fetch(forecastUrl);
+        if (!forecastResp.ok) throw new Error(`${forecastResp.status} - ${forecastResp.statusText}`);
+        const forecastData = await forecastResp.json();
+        displayForecast(forecastData);
+
+        document.getElementById('lastUpdate').textContent = new Date().toLocaleString();
+        document.getElementById('weatherData').style.display = 'block';
+    } catch (err) {
+        errorDiv.innerHTML = `<div class="error">⚠ Error: ${err.message}</div>`;
+        console.error(err);
+    }
+}
+
+function displayCurrentWeather(data) {
+    document.getElementById('temp').textContent = data.main.temp;
+    document.getElementById('feelsLike').textContent = data.main.feels_like;
+    document.getElementById('humidity').textContent = data.main.humidity;
+    document.getElementById('pressure').textContent = data.main.pressure;
+    document.getElementById('visibility').textContent = (data.visibility / 1000).toFixed(1);
+    document.getElementById('windSpeed').textContent = (data.wind.speed * 3.6).toFixed(1);
+    document.getElementById('clouds').textContent = data.clouds.all;
+    document.getElementById('condition').textContent = data.weather[0].description;
+    document.getElementById('cityName').textContent = data.name;
+    document.getElementById('coords').textContent = `${data.coord.lat}, ${data.coord.lon}`;
+
+    // Simple flood alert logic based on rain
+    let alertBox = document.getElementById('alertBox');
+    let rain = data.rain?.['1h'] || 0;
+    if (rain > 20) {
+        alertBox.className = 'card alert-box danger';
+        alertBox.innerHTML = `<div class="alert-icon">⚠</div><div class="alert-title">Flood Danger</div><div class="alert-message">Heavy rainfall detected: ${rain}mm/hr</div>`;
+    } else if (rain > 5) {
+        alertBox.className = 'card alert-box warning';
+        alertBox.innerHTML = `<div class="alert-icon">⚠</div><div class="alert-title">Flood Warning</div><div class="alert-message">Moderate rainfall: ${rain}mm/hr</div>`;
+    } else {
+        alertBox.className = 'card alert-box safe';
+        alertBox.innerHTML = `<div class="alert-icon">✅</div><div class="alert-title">Safe</div><div class="alert-message">No heavy rain detected</div>`;
+    }
+}
+
+function displayForecast(data) {
+    const forecastDiv = document.getElementById('forecast');
+    forecastDiv.innerHTML = '';
+    data.list.slice(0, 10).forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'forecast-item';
+        div.innerHTML = `<div class="forecast-time">${new Date(item.dt * 1000).toLocaleString()}</div>
+                         <div class="forecast-rain">${item.main.temp}°C | ${item.weather[0].description}</div>`;
+        forecastDiv.appendChild(div);
+    });
+}
+</script>
 </body>
 </html>
