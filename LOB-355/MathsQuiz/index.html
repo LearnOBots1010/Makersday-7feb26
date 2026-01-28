@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quiz Master</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- App Name -->
+<h1 class="app-name">Math Quiz Master</h1>
+
+<!-- Quiz Controls -->
+<div class="quiz-controls">
+  <label for="quizType">Select Quiz Type:</label>
+  <select id="quizType">
+    <option value="algebra">Algebra</option>
+    <option value="fractions">Fractions</option>
+    <option value="decimals">Decimals</option>
+  </select>
+
+  <label for="difficulty">Select Difficulty:</label>
+  <select id="difficulty">
+    <option value="easy">Easy</option>
+    <option value="medium">Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+
+  <label for="numQuestions">Number of Questions:</label>
+  <input type="number" id="numQuestions" min="1" value="5">
+
+  <button id="generateBtn">Generate Quiz</button>
+</div>
+
+<!-- Quiz Box -->
+<div class="quiz-box">
+  <h3 id="question"></h3>
+  <div id="options"></div>
+  <p id="result"></p>
+</div>
+
+<p id="finalScore"></p>
+
+<script src="script.js"></script>
+</body>
+</html>
