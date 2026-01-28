@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>3D Gomoku: Pro Edition</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #e0e0e0; transition: background 0.5s; }
+        #ui {
+            position: absolute; top: 20px; width: 100%;
+            text-align: center; color: #333; pointer-events: none;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+        #message { font-size: 32px; font-weight: 900; margin-bottom: 5px; }
+        .controls { font-size: 14px; opacity: 0.7; color: #555; }
+        
+        .btn {
+            position: absolute; padding: 12px 25px; border: none; border-radius: 30px;
+            font-weight: bold; cursor: pointer; pointer-events: auto; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        #restart { bottom: 30px; left: 50%; transform: translateX(-50%); background: #2ecc71; color: white; display: none; }
+        #theme-toggle { top: 20px; right: 20px; background: #34495e; color: white; }
+        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <div id="message">Black's Turn</div>
+    <div class="controls">Left Click: Place | Right Click: Orbit | Scroll: Zoom</div>
+</div>
+
+<button id="theme-toggle" class="btn">Switch to Park Version</button>
+<button id="restart" class="btn" onclick="location.reload()">NEW MATCH</button>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // --- Configuration ---
+    let BOARD_SIZE = 15;
+    const EMPTY = 0, PLAYER_X = 1, PLAYER_O = 2;
+    let board = Array.from({length: 15}, () => Array(15).fill(EMPTY));
+    let currentPlayer = PLAYER_X;
+    let gameOver = false;
+    let currentTheme = 'studio';
+
+    // --- Scene Setup ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 15);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    mainLight.position.set(10, 20, 10);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    // --- Environment Groups ---
+    const studioGroup = new THREE.Group();
+    const parkGroup = new THREE.Group();
+    const stonesGroup = new THREE.Group();
+    scene.add(studioGroup, parkGroup, stonesGroup);
+
+    // --- Ghost Stone ---
+    const ghostGeo = new THREE.SphereGeometry(0.4, 32, 32);
+    ghostGeo.scale(1, 0.5, 1);
+    const ghostMat = new THREE.MeshStandardMaterial({ transparent: true, opacity: 0.4 });
+    const ghostStone = new THREE.Mesh(ghostGeo, ghostMat);
+    scene.add(ghostStone);
+
+    const rayPlane = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.MeshBasicMaterial({ visible: false }));
+    rayPlane.rotation.x = -Math.PI / 2;
+    scene.add(rayPlane);
+
+    // --- Build Studio (Large Board) ---
+    const baseStudio = new THREE.Mesh(new THREE.BoxGeometry(15, 0.6, 15), new THREE.MeshStandardMaterial({ color: 0xe3c193 }));
+    baseStudio.position.y = -0.3;
+    baseStudio.receiveShadow = true;
+    studioGroup.add(baseStudio, new THREE.GridHelper(14, 14, 0x888888, 0xbbbbbb));
+
+    // --- Build Park (Small Board + Trees) ---
+    const basePark = new THREE.Mesh(new THREE.BoxGeometry(11, 0.6, 11), new THREE.MeshStandardMaterial({ color: 0xe2c48f }));
+    basePark.position.y = -0.3;
+    parkGroup.add(basePark, new THREE.GridHelper(10, 10, 0x444444, 0x888888));
+    
+    // Grass & Trees
+    const grass = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), new THREE.MeshStandardMaterial({color: 0x5fa75f}));
+    grass.rotation.x = -Math.PI/2; grass.position.y = -0.31;
+    parkGroup.add(grass);
+    
+    for(let i=0; i<10; i++){
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 2), new THREE.MeshStandardMaterial({color: 0x7a4a2e}));
+        const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 8), new THREE.MeshStandardMaterial({color: 0x2e8b57}));
+        const tx = (Math.random()-0.5)*30, tz = (Math.random()-0.5)*30;
+        if(Math.abs(tx) < 8 && Math.abs(tz) < 8) continue; // Don't block board
+        trunk.position.set(tx, 1, tz); leaves.position.set(tx, 2.5, tz);
+        parkGroup.add(trunk, leaves);
+    }
+
+    // --- Theme Toggle Logic ---
+    function applyTheme(theme) {
+        currentTheme = theme;
+        const isStudio = theme === 'studio';
+        BOARD_SIZE = isStudio ? 15 : 11;
+        studioGroup.visible = isStudio;
+        parkGroup.visible = !isStudio;
+        scene.background = new THREE.Color(isStudio ? 0xf0f0f0 : 0x87ceeb);
+        document.body.style.background = isStudio ? "#e0e0e0" : "#87ceeb";
+        document.getElementById('theme-toggle').textContent = isStudio ? "Switch to Park Version" : "Switch to Studio Version";
+        
+        // Reset game if size changes
+        board = Array.from({length: BOARD_SIZE}, () => Array(BOARD_SIZE).fill(EMPTY));
+        stonesGroup.clear();
+        gameOver = false;
+        document.getElementById('restart').style.display = 'none';
+        document.getElementById('message').textContent = "Black's Turn";
+    }
+    applyTheme('studio');
+
+    document.getElementById('theme-toggle').onclick = () => applyTheme(currentTheme === 'studio' ? 'park' : 'studio');
+
+    // --- Input & Logic ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+
+    window.addEventListener('mousemove', (e) => {
+        if (gameOver) return;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hit = raycaster.intersectObject(rayPlane)[0];
+        if (hit) {
+            const r = Math.round(hit.point.z + (BOARD_SIZE - 1) / 2);
+            const c = Math.round(hit.point.x + (BOARD_SIZE - 1) / 2);
+            if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && board[r][c] === EMPTY) {
+                ghostStone.position.set(c - (BOARD_SIZE - 1) / 2, 0.05, r - (BOARD_SIZE - 1) / 2);
+                ghostStone.material.color.set(currentPlayer === PLAYER_X ? 0x000000 : 0xffffff);
+                ghostStone.visible = true;
+                return;
+            }
+        }
+        ghostStone.visible = false;
+    });
+
+    window.addEventListener('mousedown', (e) => {
+        if (gameOver || e.button !== 0 || !ghostStone.visible) return;
+        const r = Math.round(ghostStone.position.z + (BOARD_SIZE - 1) / 2);
+        const c = Math.round(ghostStone.position.x + (BOARD_SIZE - 1) / 2);
+        
+        board[r][c] = currentPlayer;
+        const stone = new THREE.Mesh(
+            new THREE.SphereGeometry(0.4, 32, 24),
+            new THREE.MeshStandardMaterial({ color: currentPlayer === PLAYER_X ? 0x222222 : 0xfcfcfc })
+        );
+        stone.scale.set(1, 0.5, 1); stone.castShadow = true;
+        stone.position.copy(ghostStone.position);
+        stonesGroup.add(stone);
+
+        if (checkWin(r, c, currentPlayer)) {
+            gameOver = true;
+            document.getElementById('message').textContent = `🏆 ${currentPlayer === PLAYER_X ? 'BLACK' : 'WHITE'} WINS`;
+            document.getElementById('restart').style.display = 'block';
+        } else {
+            currentPlayer = (currentPlayer === PLAYER_X) ? PLAYER_O : PLAYER_X;
+            document.getElementById('message').textContent = currentPlayer === PLAYER_X ? "Black's Turn" : "White's Turn";
+        }
+    });
+
+    function checkWin(r, c, p) {
+        const directions = [[1,0], [0,1], [1,1], [1,-1]];
+        for (let [dr, dc] of directions) {
+            let count = 1;
+            for (let i = 1; i < 5; i++) if (board[r+dr*i]?.[c+dc*i] === p) count++; else break;
+            for (let i = 1; i < 5; i++) if (board[r-dr*i]?.[c-dc*i] === p) count++; else break;
+            if (count >= 5) return true;
+        }
+        return false;
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
