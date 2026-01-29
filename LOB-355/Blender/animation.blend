@@ -1,0 +1,122 @@
+import bpy
+import random
+from math import radians
+# -----------------------
+# Clear scene
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete(use_global=False)
+# -----------------------
+# Ground
+bpy.ops.mesh.primitive_plane_add(size=50, location=(0,0,0))
+ground = bpy.context.object
+mat_ground = bpy.data.materials.new(name="GroundMat")
+mat_ground.diffuse_color = (0.1,0.6,0.1,1)
+ground.data.materials.append(mat_ground)
+# -----------------------
+# Tree positions
+tree_positions = [(-15,-15), (-10,-5), (-5,-10), (0,0), (5,5), (10,10), (15,0), (-10,10), (10,-10)]
+seed_radius = 0.2
+trunk_radius = 0.5
+trunk_depth = 8      # taller trunks
+leaves_radius = 2.5
+# -----------------------
+# Function to create a tree
+def create_tree(x, y, frame_offset=0):
+    # Seed
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=seed_radius, location=(x, y, 0.1))
+    seed = bpy.context.object
+    mat_seed = bpy.data.materials.new(name=f"SeedMat_{x}_{y}")
+    mat_seed.diffuse_color = (0.4,0.2,0.1,1)
+    seed.data.materials.append(mat_seed)
+    seed.scale = (0,0,0)
+    seed.keyframe_insert(data_path="scale", frame=20 + frame_offset)  # first tree starts at frame 20
+    seed.scale = (1,1,1)
+    seed.keyframe_insert(data_path="scale", frame=30 + frame_offset)
+    # Trunk
+    bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=trunk_radius, depth=trunk_depth, location=(x,y,trunk_depth/2))
+    trunk = bpy.context.object
+    mat_trunk = bpy.data.materials.new(name=f"TrunkMat_{x}_{y}")
+    mat_trunk.diffuse_color = (0.55,0.27,0.07,1)
+    trunk.data.materials.append(mat_trunk)
+    trunk.scale = (1,1,0.01)
+    trunk.keyframe_insert(data_path="scale", frame=30 + frame_offset)
+    trunk.scale = (1,1,1)
+    trunk.keyframe_insert(data_path="scale", frame=70 + frame_offset)
+    # Leaves
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=leaves_radius, location=(x, y, trunk_depth + leaves_radius/2))
+    leaves = bpy.context.object
+    mat_leaves = bpy.data.materials.new(name=f"LeavesMat_{x}_{y}")
+    mat_leaves.diffuse_color = (0.1,0.8,0.1,1)
+    leaves.data.materials.append(mat_leaves)
+    leaves.scale = (0,0,0)
+    leaves.keyframe_insert(data_path="scale", frame=30 + frame_offset)
+    leaves.scale = (1,1,1)
+    leaves.keyframe_insert(data_path="scale", frame=70 + frame_offset)
+# -----------------------
+# Create 9 trees with staggered growth
+for i, pos in enumerate(tree_positions):
+    create_tree(pos[0], pos[1], frame_offset=i*10)  # each tree grows 10 frames after the previous
+# -----------------------
+# Camera (lower, full view of 9 trees)
+bpy.ops.object.camera_add(location=(50, -50, 45))  # slightly higher Z to see taller trees
+cam = bpy.context.object
+cam.rotation_euler = (radians(60), 0, radians(45))  # angled to center of scene
+bpy.context.scene.camera = cam  # set as active camera
+# -----------------------
+# Sun (light + visible sphere)
+bpy.ops.object.light_add(type='SUN', location=(50,-50,50))
+sun = bpy.context.object
+sun.rotation_euler = (radians(60),0,radians(45))
+sun.data.energy = 0.2
+sun.keyframe_insert(data_path="data.energy", frame=1)
+sun.data.energy = 10
+sun.keyframe_insert(data_path="data.energy", frame=20)
+# Big visible sun
+bpy.ops.mesh.primitive_uv_sphere_add(radius=15, location=(50,-50,50))
+sun_sphere = bpy.context.object
+mat_sphere = bpy.data.materials.new(name="SunSphereMat")
+mat_sphere.diffuse_color = (1,0.9,0.3,1)
+mat_sphere.emit = 1.0
+sun_sphere.data.materials.append(mat_sphere)
+# -----------------------
+# Rain drops (fat/ellipsoid)
+rain_drops = []
+for i in range(200):
+    x = random.uniform(-25,25)
+    y = random.uniform(-25,25)
+    z = random.uniform(8,15)
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=1.0, location=(x,y,z))
+    drop = bpy.context.object
+    drop.scale = (2,2,1)
+    mat_drop = bpy.data.materials.new(name=f"DropMat{i}")
+    mat_drop.diffuse_color = (0.3,0.5,1,1)
+    drop.data.materials.append(mat_drop)
+    start_frame = random.randint(1,15)
+    end_frame = start_frame + random.randint(30,50)
+    drop.keyframe_insert(data_path="location", frame=start_frame)
+    drop.location.z = 0
+    drop.keyframe_insert(data_path="location", frame=end_frame)
+    drop.keyframe_insert(data_path="hide_viewport", frame=end_frame)
+    drop.hide_viewport = True
+    drop.keyframe_insert(data_path="hide_viewport", frame=end_frame+1)
+# -----------------------
+# Hidden "67" Easter Egg (big and bright red)
+# Number 6
+bpy.ops.mesh.primitive_uv_sphere_add(radius=1.0, location=(18, -18, 0.5))  # bigger and higher
+num6 = bpy.context.object
+num6.scale = (0.7, 1.2, 1)  # squash/stretch to look like a 6
+mat_num6 = bpy.data.materials.new(name="Num6Mat")
+mat_num6.diffuse_color = (1,0,0,1)  # bright red
+mat_num6.metallic = 0.3
+mat_num6.roughness = 0.2
+num6.data.materials.append(mat_num6)
+# Number 7
+bpy.ops.mesh.primitive_cube_add(size=1, location=(21, -18, 0.5))  # slightly shifted and higher
+num7 = bpy.context.object
+num7.scale = (0.3, 1.5, 2)  # tall and thin to look like 7
+mat_num7 = bpy.data.materials.new(name="Num7Mat")
+mat_num7.diffuse_color = (1,0,0,1)  # bright red
+mat_num7.metallic = 0.3
+mat_num7.roughness = 0.2
+num7.data.materials.append(mat_num7)
+
