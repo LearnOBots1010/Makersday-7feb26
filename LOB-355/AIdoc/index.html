@@ -1,2 +1,766 @@
 <!DOCTYPE html>
-<html></html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symptom Analysis Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2d5f5d;
+            --primary-light: #4a8f8c;
+            --accent: #d4a574;
+            --bg: #fafaf8;
+            --surface: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #5a5a5a;
+            --border: #e0e0dc;
+            --shadow: rgba(45, 95, 93, 0.08);
+            --warning: #c85a54;
+            --success: #5b9279;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(90deg, transparent, transparent 79px, var(--border) 79px, var(--border) 80px),
+                repeating-linear-gradient(0deg, transparent, transparent 79px, var(--border) 79px, var(--border) 80px);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 30px;
+            position: relative;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 2.8rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+        
+        .disclaimer {
+            background: linear-gradient(135deg, #fff4e6 0%, #ffe8cc 100%);
+            border-left: 4px solid var(--accent);
+            padding: 20px 24px;
+            margin-bottom: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow);
+            animation: slideIn 0.8s ease-out 0.2s backwards;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .disclaimer-title {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .disclaimer-text {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+        
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 36px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 16px var(--shadow);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 95, 93, 0.12);
+        }
+        
+        .section-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .symptom-item {
+            position: relative;
+        }
+        
+        .symptom-checkbox {
+            display: none;
+        }
+        
+        .symptom-label {
+            display: block;
+            padding: 14px 18px;
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 400;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .symptom-label::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(74, 143, 140, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .symptom-label:hover::before {
+            left: 100%;
+        }
+        
+        .symptom-label:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px var(--shadow);
+        }
+        
+        .symptom-checkbox:checked + .symptom-label {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .analyze-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(45, 95, 93, 0.2);
+            font-family: 'Work Sans', sans-serif;
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(45, 95, 93, 0.3);
+        }
+        
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+        
+        .analyze-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        #results {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-item {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--accent);
+            transition: all 0.3s ease;
+            animation: slideInRight 0.5s ease-out backwards;
+        }
+        
+        .result-item:nth-child(1) { animation-delay: 0.1s; }
+        .result-item:nth-child(2) { animation-delay: 0.2s; }
+        .result-item:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .result-item:hover {
+            transform: translateX(4px);
+            box-shadow: -4px 4px 12px var(--shadow);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .result-name {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 1.3rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .match-score {
+            background: var(--primary);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .result-description {
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.7;
+        }
+        
+        .common-symptoms {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .symptoms-label {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .symptoms-list {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .severity-mild { background: #e8f5e9; color: #2e7d32; }
+        .severity-moderate { background: #fff3e0; color: #e65100; }
+        .severity-urgent { background: #ffebee; color: #c62828; }
+        
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 40px 20px; }
+            .card { padding: 24px; }
+            .symptoms-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="container">
+        <header>
+            <h1>Symptom Analysis Assistant</h1>
+            <p class="subtitle">AI-powered preliminary health assessment tool</p>
+        </header>
+        
+        <div class="disclaimer">
+            <div class="disclaimer-title">⚕️ Medical Disclaimer</div>
+            <p class="disclaimer-text">
+                This tool provides general information only and is not a substitute for professional medical advice, 
+                diagnosis, or treatment. Always consult with a qualified healthcare provider for any health concerns. 
+                If you're experiencing a medical emergency, call emergency services immediately.
+            </p>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">Select Your Symptoms</h2>
+            
+            <div class="symptoms-grid" id="symptomsGrid">
+                <div class="symptom-item">
+                    <input type="checkbox" id="fever" class="symptom-checkbox" value="fever">
+                    <label for="fever" class="symptom-label">Fever</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="cough" class="symptom-checkbox" value="cough">
+                    <label for="cough" class="symptom-label">Cough</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="headache" class="symptom-checkbox" value="headache">
+                    <label for="headache" class="symptom-label">Headache</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="fatigue" class="symptom-checkbox" value="fatigue">
+                    <label for="fatigue" class="symptom-label">Fatigue</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="sore-throat" class="symptom-checkbox" value="sore-throat">
+                    <label for="sore-throat" class="symptom-label">Sore Throat</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="runny-nose" class="symptom-checkbox" value="runny-nose">
+                    <label for="runny-nose" class="symptom-label">Runny Nose</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="body-aches" class="symptom-checkbox" value="body-aches">
+                    <label for="body-aches" class="symptom-label">Body Aches</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="nausea" class="symptom-checkbox" value="nausea">
+                    <label for="nausea" class="symptom-label">Nausea</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="vomiting" class="symptom-checkbox" value="vomiting">
+                    <label for="vomiting" class="symptom-label">Vomiting</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="diarrhea" class="symptom-checkbox" value="diarrhea">
+                    <label for="diarrhea" class="symptom-label">Diarrhea</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="shortness-breath" class="symptom-checkbox" value="shortness-breath">
+                    <label for="shortness-breath" class="symptom-label">Shortness of Breath</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="chest-pain" class="symptom-checkbox" value="chest-pain">
+                    <label for="chest-pain" class="symptom-label">Chest Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="dizziness" class="symptom-checkbox" value="dizziness">
+                    <label for="dizziness" class="symptom-label">Dizziness</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="congestion" class="symptom-checkbox" value="congestion">
+                    <label for="congestion" class="symptom-label">Congestion</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="sneezing" class="symptom-checkbox" value="sneezing">
+                    <label for="sneezing" class="symptom-label">Sneezing</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="chills" class="symptom-checkbox" value="chills">
+                    <label for="chills" class="symptom-label">Chills</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="loss-taste-smell" class="symptom-checkbox" value="loss-taste-smell">
+                    <label for="loss-taste-smell" class="symptom-label">Loss of Taste/Smell</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="abdominal-pain" class="symptom-checkbox" value="abdominal-pain">
+                    <label for="abdominal-pain" class="symptom-label">Abdominal Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="rash" class="symptom-checkbox" value="rash">
+                    <label for="rash" class="symptom-label">Rash</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="itching" class="symptom-checkbox" value="itching">
+                    <label for="itching" class="symptom-label">Itching</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="swollen-glands" class="symptom-checkbox" value="swollen-glands">
+                    <label for="swollen-glands" class="symptom-label">Swollen Glands</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="muscle-pain" class="symptom-checkbox" value="muscle-pain">
+                    <label for="muscle-pain" class="symptom-label">Muscle Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="joint-pain" class="symptom-checkbox" value="joint-pain">
+                    <label for="joint-pain" class="symptom-label">Joint Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="sweating" class="symptom-checkbox" value="sweating">
+                    <label for="sweating" class="symptom-label">Night Sweats</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="back-pain" class="symptom-checkbox" value="back-pain">
+                    <label for="back-pain" class="symptom-label">Back Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="ear-pain" class="symptom-checkbox" value="ear-pain">
+                    <label for="ear-pain" class="symptom-label">Ear Pain</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="eye-redness" class="symptom-checkbox" value="eye-redness">
+                    <label for="eye-redness" class="symptom-label">Red/Itchy Eyes</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="wheezing" class="symptom-checkbox" value="wheezing">
+                    <label for="wheezing" class="symptom-label">Wheezing</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="confusion" class="symptom-checkbox" value="confusion">
+                    <label for="confusion" class="symptom-label">Confusion</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="sensitivity-light" class="symptom-checkbox" value="sensitivity-light">
+                    <label for="sensitivity-light" class="symptom-label">Light Sensitivity</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="stiff-neck" class="symptom-checkbox" value="stiff-neck">
+                    <label for="stiff-neck" class="symptom-label">Stiff Neck</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="rapid-heartbeat" class="symptom-checkbox" value="rapid-heartbeat">
+                    <label for="rapid-heartbeat" class="symptom-label">Rapid Heartbeat</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="weight-loss" class="symptom-checkbox" value="weight-loss">
+                    <label for="weight-loss" class="symptom-label">Unexplained Weight Loss</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="difficulty-swallowing" class="symptom-checkbox" value="difficulty-swallowing">
+                    <label for="difficulty-swallowing" class="symptom-label">Difficulty Swallowing</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="hoarseness" class="symptom-checkbox" value="hoarseness">
+                    <label for="hoarseness" class="symptom-label">Hoarse Voice</label>
+                </div>
+                <div class="symptom-item">
+                    <input type="checkbox" id="frequent-urination" class="symptom-checkbox" value="frequent-urination">
+                    <label for="frequent-urination" class="symptom-label">Frequent Urination</label>
+                </div>
+            </div>
+            
+            <button class="analyze-btn" onclick="analyzeSymptoms()">Analyze Symptoms</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <footer>
+            <p>Created for informational purposes only • Always consult healthcare professionals for medical advice</p>
+        </footer>
+    </div>
+    
+    <script>
+        const illnessDatabase = [
+            {
+                name: "Common Cold",
+                symptoms: ["runny-nose", "congestion", "sneezing", "sore-throat", "cough", "headache", "fatigue"],
+                description: "A viral infection of the upper respiratory tract, typically mild and self-limiting.",
+                severity: "mild",
+                commonSymptoms: "Runny nose, congestion, sneezing, mild cough"
+            },
+            {
+                name: "Influenza (Flu)",
+                symptoms: ["fever", "body-aches", "fatigue", "headache", "cough", "sore-throat", "chills", "muscle-pain", "sweating"],
+                description: "A contagious respiratory illness caused by influenza viruses, more severe than a cold.",
+                severity: "moderate",
+                commonSymptoms: "High fever, severe body aches, extreme fatigue, dry cough"
+            },
+            {
+                name: "COVID-19",
+                symptoms: ["fever", "cough", "fatigue", "loss-taste-smell", "shortness-breath", "body-aches", "sore-throat", "headache", "congestion"],
+                description: "Respiratory illness caused by the SARS-CoV-2 virus with varying severity.",
+                severity: "moderate",
+                commonSymptoms: "Fever, persistent cough, loss of taste/smell, fatigue"
+            },
+            {
+                name: "Gastroenteritis (Stomach Flu)",
+                symptoms: ["nausea", "vomiting", "diarrhea", "abdominal-pain", "fever", "body-aches", "headache", "muscle-pain"],
+                description: "Inflammation of the digestive tract, typically caused by viral or bacterial infection.",
+                severity: "moderate",
+                commonSymptoms: "Nausea, vomiting, diarrhea, abdominal cramps"
+            },
+            {
+                name: "Sinusitis",
+                symptoms: ["congestion", "headache", "runny-nose", "cough", "fatigue", "fever", "ear-pain"],
+                description: "Inflammation of the sinuses often following a cold or due to allergies.",
+                severity: "mild",
+                commonSymptoms: "Facial pressure, thick nasal discharge, congestion"
+            },
+            {
+                name: "Strep Throat",
+                symptoms: ["sore-throat", "fever", "headache", "body-aches", "fatigue", "swollen-glands", "difficulty-swallowing"],
+                description: "Bacterial infection causing inflammation and pain in the throat.",
+                severity: "moderate",
+                commonSymptoms: "Severe sore throat, fever, swollen lymph nodes"
+            },
+            {
+                name: "Allergies (Allergic Rhinitis)",
+                symptoms: ["sneezing", "runny-nose", "congestion", "eye-redness", "fatigue", "itching"],
+                description: "Immune system reaction to environmental allergens like pollen or dust.",
+                severity: "mild",
+                commonSymptoms: "Sneezing, runny nose, itchy eyes, congestion"
+            },
+            {
+                name: "Bronchitis",
+                symptoms: ["cough", "congestion", "fatigue", "shortness-breath", "chest-pain", "fever", "wheezing"],
+                description: "Inflammation of the bronchial tubes, often following a cold or respiratory infection.",
+                severity: "moderate",
+                commonSymptoms: "Persistent cough with mucus, chest discomfort, fatigue"
+            },
+            {
+                name: "Migraine",
+                symptoms: ["headache", "nausea", "dizziness", "sensitivity-light", "vomiting"],
+                description: "Severe recurring headache often accompanied by nausea and sensitivity to light.",
+                severity: "moderate",
+                commonSymptoms: "Intense throbbing headache, nausea, light sensitivity"
+            },
+            {
+                name: "Food Poisoning",
+                symptoms: ["nausea", "vomiting", "diarrhea", "abdominal-pain", "fever", "body-aches", "muscle-pain"],
+                description: "Illness caused by consuming contaminated food or beverages.",
+                severity: "moderate",
+                commonSymptoms: "Sudden nausea, vomiting, diarrhea, stomach cramps"
+            },
+            {
+                name: "Asthma",
+                symptoms: ["wheezing", "shortness-breath", "cough", "chest-pain", "fatigue"],
+                description: "Chronic condition causing inflammation and narrowing of airways.",
+                severity: "moderate",
+                commonSymptoms: "Wheezing, shortness of breath, chest tightness, persistent cough"
+            },
+            {
+                name: "Ear Infection (Otitis Media)",
+                symptoms: ["ear-pain", "fever", "headache", "fatigue", "dizziness", "difficulty-swallowing"],
+                description: "Bacterial or viral infection of the middle ear, common in children.",
+                severity: "mild",
+                commonSymptoms: "Ear pain, fever, temporary hearing difficulty"
+            },
+            {
+                name: "Urinary Tract Infection (UTI)",
+                symptoms: ["frequent-urination", "abdominal-pain", "back-pain", "fever", "fatigue"],
+                description: "Infection of the urinary system, most commonly affecting the bladder.",
+                severity: "moderate",
+                commonSymptoms: "Frequent painful urination, lower abdominal pain, cloudy urine"
+            },
+            {
+                name: "Mononucleosis (Mono)",
+                symptoms: ["fever", "sore-throat", "fatigue", "swollen-glands", "body-aches", "headache", "rash"],
+                description: "Viral infection causing extreme fatigue and swollen lymph nodes.",
+                severity: "moderate",
+                commonSymptoms: "Extreme fatigue, severe sore throat, swollen glands, fever"
+            },
+            {
+                name: "Laryngitis",
+                symptoms: ["hoarseness", "sore-throat", "cough", "difficulty-swallowing", "fever", "fatigue"],
+                description: "Inflammation of the voice box, often causing voice loss or hoarseness.",
+                severity: "mild",
+                commonSymptoms: "Hoarse or lost voice, dry throat, mild cough"
+            },
+            {
+                name: "Pneumonia",
+                symptoms: ["fever", "cough", "chest-pain", "shortness-breath", "chills", "fatigue", "sweating", "confusion"],
+                description: "Infection that inflames air sacs in the lungs, can be serious.",
+                severity: "urgent",
+                commonSymptoms: "High fever, cough with phlegm, chest pain, difficulty breathing"
+            },
+            {
+                name: "Conjunctivitis (Pink Eye)",
+                symptoms: ["eye-redness", "itching", "discharge", "sensitivity-light"],
+                description: "Inflammation of the eye's outer membrane, highly contagious.",
+                severity: "mild",
+                commonSymptoms: "Red, itchy eyes, crusty discharge, tearing"
+            },
+            {
+                name: "Tension Headache",
+                symptoms: ["headache", "muscle-pain", "fatigue", "stiff-neck"],
+                description: "Most common type of headache caused by muscle tension and stress.",
+                severity: "mild",
+                commonSymptoms: "Dull, pressing headache, neck and shoulder tension"
+            },
+            {
+                name: "Anxiety Disorder",
+                symptoms: ["rapid-heartbeat", "dizziness", "sweating", "fatigue", "muscle-pain", "headache"],
+                description: "Mental health condition causing excessive worry and physical symptoms.",
+                severity: "moderate",
+                commonSymptoms: "Rapid heartbeat, restlessness, difficulty concentrating, muscle tension"
+            },
+            {
+                name: "Dehydration",
+                symptoms: ["dizziness", "fatigue", "headache", "confusion", "rapid-heartbeat", "muscle-pain"],
+                description: "Excessive loss of body fluids, can occur during illness or heat exposure.",
+                severity: "moderate",
+                commonSymptoms: "Thirst, dark urine, dizziness, fatigue, dry mouth"
+            }
+        ];
+        
+        function analyzeSymptoms() {
+            const checkboxes = document.querySelectorAll('.symptom-checkbox:checked');
+            const selectedSymptoms = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedSymptoms.length === 0) {
+                showResults([]);
+                return;
+            }
+            
+            // Calculate match scores
+            const matches = illnessDatabase.map(illness => {
+                const matchingSymptoms = illness.symptoms.filter(s => 
+                    selectedSymptoms.includes(s)
+                ).length;
+                
+                const score = (matchingSymptoms / selectedSymptoms.length) * 100;
+                
+                return {
+                    ...illness,
+                    matchScore: Math.round(score),
+                    matchingCount: matchingSymptoms
+                };
+            });
+            
+            // Filter and sort results
+            const relevantMatches = matches
+                .filter(m => m.matchScore > 0)
+                .sort((a, b) => b.matchScore - a.matchScore)
+                .slice(0, 5);
+            
+            showResults(relevantMatches);
+        }
+        
+        function showResults(matches) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (matches.length === 0) {
+                resultsDiv.innerHTML = `
+                    <div class="card">
+                        <h2 class="section-title">Analysis Results</h2>
+                        <div class="no-results">
+                            Please select at least one symptom to receive an analysis.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const severityClass = {
+                'mild': 'severity-mild',
+                'moderate': 'severity-moderate',
+                'urgent': 'severity-urgent'
+            };
+            
+            const severityText = {
+                'mild': 'Mild',
+                'moderate': 'Moderate',
+                'urgent': 'Urgent Care'
+            };
+            
+            const resultsHTML = `
+                <div class="card">
+                    <h2 class="section-title">Possible Conditions</h2>
+                    ${matches.map(match => `
+                        <div class="result-item">
+                            <div class="result-header">
+                                <div>
+                                    <span class="result-name">${match.name}</span>
+                                    <span class="severity-badge ${severityClass[match.severity]}">
+                                        ${severityText[match.severity]}
+                                    </span>
+                                </div>
+                                <div class="match-score">${match.matchScore}% Match</div>
+                            </div>
+                            <p class="result-description">${match.description}</p>
+                            <div class="common-symptoms">
+                                <div class="symptoms-label">Common Symptoms:</div>
+                                <div class="symptoms-list">${match.commonSymptoms}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    <div style="margin-top: 24px; padding: 16px; background: #fff3e0; border-radius: 8px; border-left: 4px solid var(--accent);">
+                        <strong style="color: var(--primary);">Next Steps:</strong>
+                        <p style="color: var(--text-secondary); margin-top: 8px; font-size: 0.95rem;">
+                            Based on your symptoms, consider consulting with a healthcare provider for proper diagnosis and treatment. 
+                            If symptoms are severe or worsening, seek medical attention promptly.
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            resultsDiv.innerHTML = resultsHTML;
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
