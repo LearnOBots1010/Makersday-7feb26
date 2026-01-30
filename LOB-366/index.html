@@ -1,1 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makersday Project Hub</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --hover-color: #357abd;
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 50px; /* Adjust size as needed */
+            height: auto;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .project-button {
+            background-color: white;
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .project-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .project-button:active {
+            transform: translateY(0);
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <img src="https://learnobots.com/_next/image?url=%2Fimages%2Flob.png&w=384&q=75" alt="Logo" class="logo">
+        <h1>Project Hub</h1>
+    </div>
+
+    <div class="container">
+        <a href="http://hairr.lovable.app/" class="project-button">Hairr by Aysha</a>
+        <a href="https://myalmarai.lovable.app/" class="project-button">MyAlmarai by Haania</a>
+        <a href="https://nlink.at/ArshFPS" class="project-button">FPShooter by Arsh</a>
+    </div>
+
+    <footer>LOB 366 - Makersday - February 7, 2026</footer>
+
+</body>
+</html>
