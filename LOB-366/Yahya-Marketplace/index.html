@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Roblox Marketplace</title>
+
+<style>
+:root {
+  --bg:#0b0f1a;
+  --card:#151b30;
+  --primary:#3cff8f;
+  --secondary:#4da3ff;
+  --accent:#9b6cff;
+  --text:#fff;
+  --muted:#aab0d0;
+}
+
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{margin:0;background:linear-gradient(180deg,#0b0f1a,#0e1430);color:var(--text)}
+a{text-decoration:none;color:inherit}
+.hidden{display:none}
+
+.container{max-width:1100px;margin:auto;padding:1.5rem}
+.btn{
+  padding:.8rem 1.2rem;
+  border-radius:14px;
+  font-weight:600;
+  cursor:pointer;
+  border:none;
+}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#000}
+.btn-secondary{border:2px solid var(--secondary);background:none;color:#fff}
+
+.card{
+  background:radial-gradient(circle at top,#1b2350,var(--card));
+  border-radius:18px;
+  padding:1rem;
+  box-shadow:0 10px 25px rgba(0,0,0,.3)
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:1rem;
+}
+
+/* HEADER */
+header{text-align:center;padding:4rem 1.5rem}
+header h1{font-size:2.5rem}
+header p{color:var(--muted);margin:1rem 0 2rem}
+.actions{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+
+/* MARKET */
+.market-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:1rem
+}
+
+.item h3{margin:.4rem 0}
+.price{color:var(--primary);font-weight:700}
+
+/* CART */
+.cart{
+  position:fixed;
+  right:0;
+  top:0;
+  width:320px;
+  height:100%;
+  background:#070a14;
+  padding:1rem;
+  transform:translateX(100%);
+  transition:.3s;
+  z-index:99;
+}
+.cart.open{transform:translateX(0)}
+.cart h2{text-align:center}
+.cart-item{
+  display:flex;
+  justify-content:space-between;
+  margin:.6rem 0;
+  font-size:.9rem
+}
+.cart-footer{margin-top:1rem;text-align:center}
+
+/* FOOTER */
+footer{
+  margin-top:4rem;
+  background:#070a14;
+  padding:2rem;
+  font-size:.85rem;
+  color:var(--muted)
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Trade Smarter. Level Up Faster.</h1>
+  <p>Buy, sell, and trade Roblox items and services securely.</p>
+  <div class="actions">
+    <button class="btn btn-primary" onclick="showMarket()">Browse Marketplace</button>
+    <button class="btn btn-secondary" onclick="toggleCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+  </div>
+</header>
+
+<div class="container hidden" id="market">
+
+  <div class="market-header">
+    <h2>Marketplace</h2>
+    <button class="btn btn-secondary" onclick="toggleCart()">View Cart</button>
+  </div>
+
+  <div class="grid" id="items"></div>
+</div>
+
+<!-- CART -->
+<div class="cart" id="cart">
+  <h2>Your Cart</h2>
+  <div id="cartItems"></div>
+  <div class="cart-footer">
+    <p><strong>Total:</strong> <span id="total">0</span> R$</p>
+    <button class="btn btn-primary" onclick="checkout()">Buy Now</button>
+  </div>
+</div>
+
+<footer>
+  ⚠️ Not affiliated with Roblox Corporation. Roblox is a registered trademark of Roblox Corporation.
+</footer>
+
+<script>
+const products = [
+  {id:1,name:"Limited Fedora",price:250},
+  {id:2,name:"Game Boost (1 Hour)",price:100},
+  {id:3,name:"UI Design Service",price:500},
+  {id:4,name:"Script Fix",price:300},
+  {id:5,name:"VIP Gamepass",price:150},
+  {id:6,name:"Build Model Pack",price:400}
+];
+
+let cart = [];
+
+const itemsDiv = document.getElementById("items");
+const cartDiv = document.getElementById("cart");
+const cartItemsDiv = document.getElementById("cartItems");
+const totalSpan = document.getElementById("total");
+const cartCount = document.getElementById("cartCount");
+
+products.forEach(p=>{
+  const div=document.createElement("div");
+  div.className="card item";
+  div.innerHTML=`
+    <h3>${p.name}</h3>
+    <p class="price">${p.price} R$</p>
+    <button class="btn btn-primary" onclick="addToCart(${p.id})">Add to Cart</button>
+  `;
+  itemsDiv.appendChild(div);
+});
+
+function showMarket(){
+  document.getElementById("market").classList.remove("hidden");
+  window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"});
+}
+
+function toggleCart(){
+  cartDiv.classList.toggle("open");
+}
+
+function addToCart(id){
+  const product = products.find(p=>p.id===id);
+  cart.push(product);
+  updateCart();
+}
+
+function updateCart(){
+  cartItemsDiv.innerHTML="";
+  let total=0;
+  cart.forEach((item,i)=>{
+    total+=item.price;
+    cartItemsDiv.innerHTML+=`
+      <div class="cart-item">
+        <span>${item.name}</span>
+        <span>${item.price} R$</span>
+      </div>`;
+  });
+  totalSpan.textContent=total;
+  cartCount.textContent=cart.length;
+}
+
+function checkout(){
+  if(cart.length===0){alert("Cart is empty!");return;}
+  alert("✅ Purchase successful! (mock)");
+  cart=[];
+  updateCart();
+  toggleCart();
+}
+</script>
+
+</body>
+</html>
